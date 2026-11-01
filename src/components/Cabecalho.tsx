@@ -1,15 +1,17 @@
-﻿export function Cabecalho() {
+﻿import { Link } from 'react-router-dom'
+
+export function Cabecalho() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <a className="brand" href="/" aria-label="LabAgenda — início">
+        <Link className="brand" to="/" aria-label="LabAgenda — início">
           <span className="brand__mark" aria-hidden="true">L</span>
           <span className="brand__name">LabAgenda</span>
-        </a>
+        </Link>
         <nav className="site-nav" aria-label="Navegação principal">
-          <a className="site-nav__link site-nav__link--active" href="/" aria-current="page">
+          <Link className="site-nav__link site-nav__link--active" to="/" aria-current="page">
             Laboratórios
-          </a>
+          </Link>
           <span className="site-nav__link">Meus agendamentos</span>
           <span className="user-avatar" aria-label="Perfil de usuário" title="Perfil">UE</span>
         </nav>

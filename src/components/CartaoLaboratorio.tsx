@@ -1,4 +1,5 @@
-﻿import type { Laboratorio } from '../types/laboratorio'
+﻿import { Link } from 'react-router-dom'
+import type { Laboratorio } from '../types/laboratorio'
 
 interface CartaoLaboratorioProps {
   laboratorio: Laboratorio
@@ -60,7 +61,7 @@ export function CartaoLaboratorio({ laboratorio }: CartaoLaboratorioProps) {
             <span className="availability-pill__dot" aria-hidden="true" />
             {laboratorio.disponivel ? 'Aberto para agendamento' : 'Indisponível no momento'}
           </span>
-          <a className="button button--primary" href={linkDetalhes}>Ver laboratório</a>
+          <Link className="button button--primary" to={linkDetalhes}>Ver laboratório</Link>
         </div>
       </div>
     </article>
