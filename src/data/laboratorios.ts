@@ -1,0 +1,53 @@
+﻿import type { Laboratorio } from '../types/laboratorio'
+
+// Dados fictícios de protótipo, estruturados para futura substituição pela API.
+export const laboratoriosFicticios: Laboratorio[] = [
+  {
+    id: 1,
+    nome: 'COLAB',
+    resumo: 'Colaboração · Pesquisa · Extensão',
+    bloco: 'Bloco C',
+    sala: 'Sala 201',
+    capacidade: 15,
+    disponivel: true,
+    equipamentos: ['Projetor', 'Internet'],
+    tiposDeUso: ['Colaboração', 'Pesquisa', 'Extensão'],
+    tema: 'verde',
+  },
+  {
+    id: 2,
+    nome: 'Laboratório de Informática 1',
+    resumo: 'Computadores · Projetor · Internet',
+    bloco: 'Bloco A',
+    sala: 'Sala 102',
+    capacidade: 30,
+    disponivel: true,
+    equipamentos: ['Computadores', 'Projetor', 'Internet'],
+    tiposDeUso: ['Aula', 'Pesquisa', 'Treinamento'],
+    tema: 'azul',
+  },
+  {
+    id: 3,
+    nome: 'Laboratório de Eletrônica',
+    resumo: 'Bancadas · Instrumentação',
+    bloco: 'Bloco B',
+    sala: 'Sala 08',
+    capacidade: 20,
+    disponivel: true,
+    equipamentos: ['Bancadas', 'Instrumentação'],
+    tiposDeUso: ['Aula', 'Pesquisa', 'Extensão'],
+    tema: 'roxo',
+  },
+  {
+    id: 4,
+    nome: 'Laboratório de Redes',
+    resumo: 'Redes · Servidores · Treinamento',
+    bloco: 'Bloco A',
+    sala: 'Sala 105',
+    capacidade: 25,
+    disponivel: false,
+    equipamentos: ['Redes', 'Servidores'],
+    tiposDeUso: ['Treinamento', 'Aula'],
+    tema: 'laranja',
+  },
+]
