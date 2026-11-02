@@ -164,6 +164,9 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
                     <p className="detail-slots__empty">Nenhum horário demonstrativo cadastrado</p>
                   )}
                 </section>
+                <Link className="button button--primary" to={`/laboratorios/${laboratorio.id}/agendamento`}>
+                  Solicitar agendamento
+                </Link>
               </div>
             </div>
           )}
