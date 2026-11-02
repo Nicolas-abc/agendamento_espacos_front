@@ -1,15 +1,58 @@
 ﻿import { Link } from 'react-router-dom'
 import { Cabecalho } from '../components/Cabecalho'
 import { detalhesLaboratoriosDemonstrativos } from '../data/detalhesLaboratorios'
+import { horariosLaboratoriosDemonstrativos } from '../data/horariosLaboratorios'
 import { laboratoriosFicticios } from '../data/laboratorios'
 
 interface DetalhesLaboratorioProps {
   id: string
 }
 
+const nomesDias: Record<number, string> = {
+  0: 'Domingo',
+  1: 'Segunda',
+  2: 'Terça',
+  3: 'Quarta',
+  4: 'Quinta',
+  5: 'Sexta',
+  6: 'Sábado',
+}
+
+function agruparDiasComMesmoHorario(horarios: typeof horariosLaboratoriosDemonstrativos[number]) {
+  const agrupados: Array<{ dias: string[]; ativo: boolean; horaAbertura?: string; horaFechamento?: string }> = []
+
+  for (const horario of horarios) {
+    const anterior = agrupados[agrupados.length - 1]
+    const mesmoHorario = anterior
+      && anterior.ativo === horario.ativo
+      && anterior.horaAbertura === horario.horaAbertura
+      && anterior.horaFechamento === horario.horaFechamento
+
+    if (anterior && mesmoHorario) {
+      anterior.dias.push(nomesDias[horario.diaSemana])
+    } else {
+      agrupados.push({
+        dias: [nomesDias[horario.diaSemana]],
+        ativo: horario.ativo,
+        horaAbertura: horario.horaAbertura,
+        horaFechamento: horario.horaFechamento,
+      })
+    }
+  }
+
+  return agrupados.map((grupo) => ({
+    ...grupo,
+    periodo: grupo.dias.length > 1
+      ? `${grupo.dias[0]} a ${grupo.dias[grupo.dias.length - 1].toLowerCase()}`
+      : grupo.dias[0],
+  }))
+}
+
 export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
   const laboratorio = laboratoriosFicticios.find((item) => String(item.id) === id)
   const detalhes = laboratorio ? detalhesLaboratoriosDemonstrativos[laboratorio.id] : undefined
+  const horarios = laboratorio ? horariosLaboratoriosDemonstrativos[laboratorio.id] : undefined
+  const periodosDeFuncionamento = horarios ? agruparDiasComMesmoHorario(horarios) : []
 
   return (
     <>
@@ -77,6 +120,24 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
                   </ul>
                 </section>
               </div>
+              {horarios && (
+                <section className="detail-card detail-hours" aria-labelledby="detail-hours-title">
+                  <h2 id="detail-hours-title">Horário de funcionamento</h2>
+                  <p className="detail-card__note">Horários demonstrativos; não representam a disponibilidade oficial.</p>
+                  <dl className="detail-hours__rows">
+                    {periodosDeFuncionamento.map((periodo) => (
+                      <div className="detail-hours__row" key={periodo.periodo}>
+                        <dt>{periodo.periodo}</dt>
+                        <dd>
+                          {periodo.ativo
+                            ? `${periodo.horaAbertura} — ${periodo.horaFechamento}`
+                            : 'Fechado'}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
             </div>
           )}
           </>

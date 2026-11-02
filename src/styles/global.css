@@ -208,6 +208,12 @@ a { color: inherit; }
 .detail-rules__list { display: grid; gap: 14px; margin: 14px 0 0; padding: 0; list-style: none; }
 .detail-rules__list li { position: relative; padding-left: 24px; color: var(--color-muted); font-size: 15px; line-height: 1.45; }
 .detail-rules__list li::before { position: absolute; top: .55em; left: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); content: ''; }
+.detail-hours h2 { margin-bottom: 12px; }
+.detail-hours .detail-card__note { margin-top: 0; margin-bottom: 16px; }
+.detail-hours__rows { display: grid; gap: 12px; margin: 0; }
+.detail-hours__row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; color: var(--color-muted); font-size: 14px; }
+.detail-hours__row dt { min-width: 0; }
+.detail-hours__row dd { margin: 0; color: #1d2926; font-weight: 600; text-align: right; white-space: nowrap; }
 
 @media (max-width: 760px) {
   .detail-hero { min-height: 340px; padding: 36px 32px; }
