@@ -169,3 +169,34 @@ a { color: inherit; }
   .placeholder-card h1 { font-size: 26px; }
 }
 
+.detail-page { padding-top: 34px; }
+.detail-hero {
+  display: flex; min-height: 375px; align-items: center; padding: 48px 60px;
+  border-radius: 20px; background: linear-gradient(112deg, #0d765a 0%, #064b3b 100%); color: #fff;
+}
+.detail-hero__content { width: min(100%, 920px); }
+.detail-hero .availability-pill--open { background: #f0faf5; color: #117d4d; }
+.detail-hero .availability-pill--closed { background: #f1f2f1; color: #5c6965; }
+.detail-hero h1 {
+  margin: 22px 0 2px; font-size: clamp(30px, 3vw, 42px); font-weight: 700;
+  letter-spacing: -1px; line-height: 1.2;
+}
+.detail-hero__summary { max-width: 780px; margin: 0; color: rgba(255,255,255,.88); font-size: 18px; line-height: 1.4; }
+.detail-hero__facts { display: grid; width: min(100%, 760px); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.detail-hero__fact {
+  display: flex; min-height: 76px; align-items: center; gap: 16px; padding: 12px 18px;
+  border-radius: 15px; background: #fff; color: #1d2926;
+}
+.detail-hero__fact svg { width: 24px; height: 24px; flex: 0 0 auto; color: var(--color-primary); }
+.detail-hero__fact > span { display: grid; gap: 5px; }
+.detail-hero__fact-label { color: var(--color-muted); font-size: 14px; }
+.detail-hero__fact strong { font-size: 16px; font-weight: 600; }
+
+@media (max-width: 760px) {
+  .detail-hero { min-height: 340px; padding: 36px 32px; }
+}
+@media (max-width: 560px) {
+  .detail-hero { min-height: auto; padding: 28px 22px; border-radius: 16px; }
+  .detail-hero__facts { grid-template-columns: 1fr; gap: 10px; margin-top: 22px; }
+  .detail-hero__summary { font-size: 16px; }
+}
