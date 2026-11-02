@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom'
 import { Cabecalho } from '../components/Cabecalho'
+import { detalhesLaboratoriosDemonstrativos } from '../data/detalhesLaboratorios'
 import { laboratoriosFicticios } from '../data/laboratorios'
 
 interface DetalhesLaboratorioProps {
@@ -8,6 +9,7 @@ interface DetalhesLaboratorioProps {
 
 export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
   const laboratorio = laboratoriosFicticios.find((item) => String(item.id) === id)
+  const detalhes = laboratorio ? detalhesLaboratoriosDemonstrativos[laboratorio.id] : undefined
 
   return (
     <>
@@ -17,6 +19,7 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
           <Link to="/">Laboratórios</Link><span aria-hidden="true">/</span><span>{laboratorio?.nome ?? 'Laboratório não encontrado'}</span>
         </p>
         {laboratorio ? (
+          <>
           <section className="detail-hero" aria-labelledby="detail-lab-title">
             <div className="detail-hero__content">
               <span className={'availability-pill ' + (laboratorio.disponivel ? 'availability-pill--open' : 'availability-pill--closed')}>
@@ -51,6 +54,32 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
               </div>
             </div>
           </section>
+          {detalhes && (
+            <div className="detail-info-layout">
+              <div className="detail-info-main">
+                <section className="detail-card" aria-labelledby="detail-about-title">
+                  <h2 id="detail-about-title">Sobre o laboratório</h2>
+                  <p>{detalhes.descricao}</p>
+                  <p className="detail-card__note">Descrição demonstrativa, não oficial.</p>
+                </section>
+
+                <section className="detail-card detail-rules" aria-labelledby="detail-rules-title">
+                  <div className="detail-rules__heading">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3 20 6v5c0 5.1-3.4 8.4-8 10-4.6-1.6-8-4.9-8-10V6l8-3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                      <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <h2 id="detail-rules-title">Regras de uso</h2>
+                  </div>
+                  <p className="detail-card__note">Orientações ilustrativas, ainda não validadas institucionalmente.</p>
+                  <ul className="detail-rules__list">
+                    {detalhes.regrasDeUso.map((regra) => <li key={regra}>{regra}</li>)}
+                  </ul>
+                </section>
+              </div>
+            </div>
+          )}
+          </>
         ) : (
           <section className="placeholder-card">
             <p className="placeholder-card__eyebrow">ID {id}</p>
