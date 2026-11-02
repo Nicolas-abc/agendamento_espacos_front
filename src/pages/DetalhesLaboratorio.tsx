@@ -3,6 +3,7 @@ import { Cabecalho } from '../components/Cabecalho'
 import { detalhesLaboratoriosDemonstrativos } from '../data/detalhesLaboratorios'
 import { horariosLaboratoriosDemonstrativos } from '../data/horariosLaboratorios'
 import { laboratoriosFicticios } from '../data/laboratorios'
+import { formatarDataRelativa, proximosHorariosLivresDemonstrativos } from '../data/proximosHorariosLivres'
 
 interface DetalhesLaboratorioProps {
   id: string
@@ -52,6 +53,7 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
   const laboratorio = laboratoriosFicticios.find((item) => String(item.id) === id)
   const detalhes = laboratorio ? detalhesLaboratoriosDemonstrativos[laboratorio.id] : undefined
   const horarios = laboratorio ? horariosLaboratoriosDemonstrativos[laboratorio.id] : undefined
+  const proximosHorarios = laboratorio ? proximosHorariosLivresDemonstrativos[laboratorio.id] : undefined
   const periodosDeFuncionamento = horarios ? agruparDiasComMesmoHorario(horarios) : []
 
   return (
@@ -120,24 +122,49 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
                   </ul>
                 </section>
               </div>
-              {horarios && (
-                <section className="detail-card detail-hours" aria-labelledby="detail-hours-title">
-                  <h2 id="detail-hours-title">Horário de funcionamento</h2>
-                  <p className="detail-card__note">Horários demonstrativos; não representam a disponibilidade oficial.</p>
-                  <dl className="detail-hours__rows">
-                    {periodosDeFuncionamento.map((periodo) => (
-                      <div className="detail-hours__row" key={periodo.periodo}>
-                        <dt>{periodo.periodo}</dt>
-                        <dd>
-                          {periodo.ativo
-                            ? `${periodo.horaAbertura} — ${periodo.horaFechamento}`
-                            : 'Fechado'}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
+              <div className="detail-slots-column">
+                {horarios && (
+                  <section className="detail-card detail-hours" aria-labelledby="detail-hours-title">
+                    <h2 id="detail-hours-title">Horário de funcionamento</h2>
+                    <p className="detail-card__note">Horários demonstrativos; não representam a disponibilidade oficial.</p>
+                    <dl className="detail-hours__rows">
+                      {periodosDeFuncionamento.map((periodo) => (
+                        <div className="detail-hours__row" key={periodo.periodo}>
+                          <dt>{periodo.periodo}</dt>
+                          <dd>
+                            {periodo.ativo
+                              ? `${periodo.horaAbertura} — ${periodo.horaFechamento}`
+                              : 'Fechado'}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                )}
+
+                <section className="detail-card detail-slots" aria-labelledby="detail-slots-title">
+                  <h2 id="detail-slots-title">Próximos horários livres</h2>
+                  <p className="detail-slots__notice">Horários demonstrativos; não representam a disponibilidade oficial.</p>
+                  {proximosHorarios && proximosHorarios.length > 0 ? (
+                    <div className="detail-slots__groups">
+                      {proximosHorarios.map((grupo) => (
+                        <div className="detail-slots__group" key={grupo.diasAFrente}>
+                          <h3 className="detail-slots__date">{formatarDataRelativa(grupo.diasAFrente)}</h3>
+                          <ul className="detail-slots__list">
+                            {grupo.horarios.map((horario) => (
+                              <li className="detail-slots__item" key={horario}>
+                                <span>{horario}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="detail-slots__empty">Nenhum horário demonstrativo cadastrado</p>
+                  )}
                 </section>
-              )}
+              </div>
             </div>
           )}
           </>
