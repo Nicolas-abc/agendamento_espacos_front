@@ -1,201 +1,62 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Cabecalho } from '../components/Cabecalho'
-import { atualizarDataSelecionada, diaPodeSerSelecionado, obterEstadoDiaDemonstrativo } from '../data/calendarioDemonstrativo'
+import { diaPodeSerSelecionado, obterEstadoDiaDemonstrativo } from '../data/calendarioDemonstrativo'
+import { duracaoMinutos, intervaloEstaLivre, minutos, obterIntervalosDemonstrativos } from '../data/horariosAgendamentoDemonstrativos'
 import { laboratoriosFicticios } from '../data/laboratorios'
 
-interface SolicitacaoAgendamentoProps {
-  id: string
+interface Props { id: string }
+const iso = (d: Date) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0')
+const parseData = (s: string | null) => { if (!s || !/^\d{4}-(0[1-9]|1[0-2])-\d{2}$/.test(s)) return null; const [y,m,d]=s.split('-').map(Number); const date=new Date(y,m-1,d); return iso(date)===s ? date : null }
+const formatMonth = (d: Date) => new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(d).replace(/^./, c=>c.toLocaleUpperCase('pt-BR'))
+const formatLong = (d: Date) => new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d).replace(/^./, c=>c.toLocaleUpperCase('pt-BR'))
+const duration = (n: number) => `${Math.floor(n/60)} h${n%60 ? ` ${n%60} min` : ''}`
+
+export function SolicitacaoAgendamento({ id }: Props) {
+ const lab = laboratoriosFicticios.find(x => String(x.id)===id)
+ const [params,setParams] = useSearchParams()
+ const dataParam = params.get('data')
+ const data = parseData(dataParam)
+ const mesParam = params.get('mes')
+ const mes = /^\d{4}-(0[1-9]|1[0-2])$/.test(mesParam || '') ? new Date(Number(mesParam!.slice(0,4)), Number(mesParam!.slice(5,7))-1, 1) : data ? new Date(data.getFullYear(),data.getMonth(),1) : new Date(new Date().getFullYear(),new Date().getMonth(),1)
+ const dataIso = data ? iso(data) : ''
+ const slots = lab && data ? obterIntervalosDemonstrativos(lab.id,dataIso) : undefined
+ const inicio = params.get('inicio') || ''
+ const fim = params.get('fim') || ''
+ const selecaoValida = Boolean(slots && intervaloEstaLivre(slots,inicio,fim))
+ const terminoDisponivel = Boolean(inicio && !fim && slots?.some(slot => slot.estado === 'livre' && intervaloEstaLivre(slots,inicio,slot.fim)))
+ useEffect(() => {
+  if (!lab) return
+  const next = new URLSearchParams(params); let changed = false
+  if (mesParam && !/^\d{4}-(0[1-9]|1[0-2])$/.test(mesParam)) { next.delete('mes'); changed=true }
+  const parsed = parseData(dataParam)
+  if (dataParam && (!parsed || obterEstadoDiaDemonstrativo(lab.id,parsed) !== 'livre')) { next.delete('data'); next.delete('inicio'); next.delete('fim'); next.delete('avancar'); changed=true }
+  const validSlots = parsed ? obterIntervalosDemonstrativos(lab.id,iso(parsed)) : undefined
+  const startOk = Boolean(validSlots?.some(s => s.inicio === inicio && s.estado === 'livre'))
+  const timeOk = fim ? Boolean(validSlots && intervaloEstaLivre(validSlots,inicio,fim)) : inicio ? startOk : true
+  if ((inicio || fim) && !timeOk) { next.delete('inicio'); next.delete('fim'); next.delete('avancar'); changed=true }
+  if (next.has('avancar') && !(validSlots && intervaloEstaLivre(validSlots,inicio,fim))) { next.delete('avancar'); changed=true }
+  if (changed) setParams(next,{replace:true})
+ },[lab,params,dataParam,mesParam,inicio,fim,setParams])
+ const patch = (values: Record<string,string|null>) => { const next=new URLSearchParams(params); Object.entries(values).forEach(([k,v])=>v===null?next.delete(k):next.set(k,v)); setParams(next) }
+ const changeMonth = (delta:number) => { const next=new Date(mes.getFullYear(),mes.getMonth()+delta,1); patch({mes: next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')}) }
+ const escolherData = (d:Date) => patch({data:iso(d),mes:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),inicio:null,fim:null,avancar:null})
+ const escolherSlot = (slot:{inicio:string;fim:string;estado:string}) => {
+  if (slot.estado!=='livre') return
+  if (!inicio || fim) { patch({inicio:slot.inicio,fim:null,avancar:null}); return }
+  if (intervaloEstaLivre(slots,inicio,slot.fim)) patch({fim:slot.fim,avancar:null})
+ }
+ const hoje=new Date(); const primeiro=new Date(mes.getFullYear(),mes.getMonth(),1); const offset=(primeiro.getDay()+6)%7
+ const grade=Array.from({length:42},(_,i)=>new Date(mes.getFullYear(),mes.getMonth(),1-offset+i))
+ return <><Cabecalho/><main className="page-shell booking-page">{lab ? <><nav className="booking-progress" aria-label="Etapas da solicitação"><Link className="booking-progress__step booking-progress__step--complete" to={`/laboratorios/${lab.id}`}><span className="booking-progress__number">1</span><span>Laboratório</span></Link><span className="booking-progress__connector booking-progress__connector--complete" aria-hidden="true"/><div className="booking-progress__step booking-progress__step--current" aria-current="step"><span className="booking-progress__number">2</span><span>Data e horário</span></div><span className="booking-progress__connector" aria-hidden="true"/><div className="booking-progress__step booking-progress__step--upcoming" aria-disabled="true"><span className="booking-progress__number">3</span><span>Detalhes</span></div></nav>
+ <header className="booking-intro"><h1>Escolha a data e o horário</h1><p>Selecione uma data e um intervalo demonstrativos para {lab.nome}.</p></header>
+ <p className="booking-notice" id="booking-demo-notice" role="note">Datas e horários demonstrativos; não representam disponibilidade oficial nem confirmam reserva.</p><p className="booking-weekend-notice" id="booking-weekend-notice" role="note">Finais de semana indisponíveis para agendamento. Esta é uma restrição provisória, sujeita à confirmação do funcionamento oficial do laboratório.</p>
+ <div className="booking-calendar-layout"><section className="booking-card booking-calendar" aria-labelledby="booking-calendar-title" aria-describedby="booking-demo-notice booking-weekend-notice"><div className="booking-calendar__header"><div><h2 id="booking-calendar-title">{formatMonth(mes)}</h2><p>Disponibilidade demonstrativa do laboratório</p></div><div className="booking-calendar__navigation"><button type="button" aria-label="Mês anterior" className="booking-calendar__month-button" onClick={()=>changeMonth(-1)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button><button type="button" aria-label="Próximo mês" className="booking-calendar__month-button" onClick={()=>changeMonth(1)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div></div>
+ <div className="booking-calendar__weekdays" aria-hidden="true">{['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(x=><span key={x}>{x}</span>)}</div><div className="booking-calendar__days" role="group" aria-label={`Dias de ${formatMonth(mes)}`}>{grade.map(d=>{const inside=d.getMonth()===mes.getMonth()&&d.getFullYear()===mes.getFullYear();const state=inside?obterEstadoDiaDemonstrativo(lab.id,d,hoje):'sem-dados';const today=iso(d)===iso(hoje);const selected=dataIso===iso(d);const enabled=diaPodeSerSelecionado(state,inside);return <button key={iso(d)} type="button" className={['booking-calendar__day',`booking-calendar__day--${state}`,inside?'':'booking-calendar__day--outside',today?'booking-calendar__day--today':'',selected?'booking-calendar__day--selected':''].filter(Boolean).join(' ')} disabled={!enabled} aria-pressed={selected} aria-label={`${formatLong(d)}: ${inside ? rotuloEstadoDia(state) : 'dia de mês adjacente, indisponível nesta etapa'}${today ? ', hoje' : ''}`} onClick={()=>escolherData(d)}>{d.getDate()}</button>})}</div>
+ <div className="booking-calendar__legend" aria-label="Legenda de disponibilidade"><span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--free" />Livre</span><span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--occupied" />Ocupado</span><span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--no-data" />Sem disponibilidade demonstrativa</span><span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--weekend" />Fim de semana, provisório</span><span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--today" />Hoje</span></div></section>
+ <aside className="booking-card booking-day-panel" aria-live="polite" aria-label="Horários do dia selecionado">{data ? <><h2>{formatLong(data)}</h2><p className="booking-day-panel__hint">Intervalos fictícios de uma hora; escolha início e término.</p>{!slots ? <div className="booking-day-panel__empty">Nenhum horário demonstrativo cadastrado para este dia.</div> : slots.every(s=>s.estado==='ocupado') ? <div className="booking-day-panel__empty">Não há horários livres demonstrativos neste dia.</div> : <><div className="booking-time-list">{slots.map(slot=>{const startSelected=inicio===slot.inicio;const endSelected=fim===slot.fim;const canEnd=Boolean(inicio&&!fim&&minutos(slot.inicio)!==minutos(inicio)&&intervaloEstaLivre(slots,inicio,slot.fim));const cannotEnd=slot.estado==='livre'&&Boolean(inicio)&&!fim&&!startSelected&&!endSelected&&!canEnd;const disabled=slot.estado==='ocupado'||(!startSelected&&!endSelected&&Boolean(inicio)&&!fim&&!canEnd);return <button key={slot.inicio} type="button" className={`booking-time-slot booking-time-slot--${slot.estado}${cannotEnd ? " booking-time-slot--blocked" : ""}${startSelected||endSelected?' is-selected':''}`} disabled={disabled} aria-pressed={startSelected||endSelected} onClick={()=>escolherSlot(slot)}>{slot.inicio}–{slot.fim}<small>{slot.estado==='ocupado'?'Ocupado':endSelected?'Término':startSelected?'Início':cannotEnd?'Não forma intervalo contínuo':'Livre'}</small></button>})}</div>{inicio&&!fim&&!terminoDisponivel&&<p className="booking-time-blocked-message" role="status">Não é possível continuar a partir deste horário porque existe um intervalo indisponível no período. Escolha outro horário inicial.</p>}{inicio&&!fim&&<button type="button" className="booking-time-reset" onClick={()=>patch({inicio:null,fim:null,avancar:null})}>Escolher outro horário inicial</button>}{inicio&&!fim&&<p className="booking-day-panel__hint">Início selecionado: {inicio}. Escolha um término livre que não atravesse intervalos ocupados.</p>}{selecaoValida&&<section className="booking-selection-summary" aria-label="Resumo do intervalo"><strong>Resumo demonstrativo</strong><span>{formatLong(data)} · {inicio}–{fim}</span><span>Duração: {duration(duracaoMinutos(inicio,fim))}</span></section>}</>}</> : <><h2>Selecione uma data</h2><p className="booking-day-panel__hint">Escolha um dia livre no calendário.</p><div className="booking-day-panel__empty">Os intervalos demonstrativos aparecerão aqui.</div></>}<p className="booking-day-panel__hint">A escolha não cria reserva. A próxima etapa de detalhes ainda não está disponível.</p><button type="button" className="button button--primary booking-continue" disabled={!selecaoValida} onClick={()=>patch({avancar:'1'})}>Continuar para os detalhes</button>{params.get('avancar')==='1'&&selecaoValida&&<p role="status" className="booking-continue__feedback">Seleção preservada. O formulário de detalhes será disponibilizado em uma etapa futura; nenhuma reserva foi criada.</p>}</aside></div>
+ <Link className="booking-back-link" to={`/laboratorios/${lab.id}`}>← Voltar aos detalhes do laboratório</Link></> : <section className="placeholder-card"><p className="placeholder-card__eyebrow">ID {id}</p><h1>Laboratório não encontrado</h1><p>Não foi possível encontrar um laboratório com o ID {id}.</p><Link className="button button--primary" to="/">Voltar ao catálogo</Link></section>}</main></>
 }
-
-export function SolicitacaoAgendamento({ id }: SolicitacaoAgendamentoProps) {
-  const laboratorio = laboratoriosFicticios.find((item) => String(item.id) === id)
-  const [mesExibido, setMesExibido] = useState(() => {
-    const hoje = new Date()
-    return new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-  })
-  const [dataSelecionada, setDataSelecionada] = useState<Date | null>(null)
-
-  const hoje = new Date()
-  const primeiroDiaDoMes = new Date(mesExibido.getFullYear(), mesExibido.getMonth(), 1)
-  const deslocamentoDoPrimeiroDia = (primeiroDiaDoMes.getDay() + 6) % 7
-  const primeiroDiaDaGrade = new Date(
-    mesExibido.getFullYear(),
-    mesExibido.getMonth(),
-    1 - deslocamentoDoPrimeiroDia,
-  )
-  const diasDaGrade = Array.from({ length: 42 }, (_, indice) => (
-    new Date(primeiroDiaDaGrade.getFullYear(), primeiroDiaDaGrade.getMonth(), primeiroDiaDaGrade.getDate() + indice)
-  ))
-  const diaSelecionado = dataSelecionada
-
-  function alterarMes(deslocamento: number) {
-    setMesExibido((mesAtual) => new Date(mesAtual.getFullYear(), mesAtual.getMonth() + deslocamento, 1))
-    setDataSelecionada(null)
-  }
-
-  return (
-    <>
-      <Cabecalho />
-      <main className="page-shell booking-page">
-        {laboratorio ? (
-          <>
-            <nav className="booking-progress" aria-label="Etapas da solicitação">
-              <Link className="booking-progress__step booking-progress__step--complete" to={`/laboratorios/${laboratorio.id}`}>
-                <span className="booking-progress__number">1</span>
-                <span>Laboratório</span>
-              </Link>
-              <span className="booking-progress__connector booking-progress__connector--complete" aria-hidden="true" />
-              <div className="booking-progress__step booking-progress__step--current" aria-current="step">
-                <span className="booking-progress__number">2</span>
-                <span>Data e horário</span>
-              </div>
-              <span className="booking-progress__connector" aria-hidden="true" />
-              <div className="booking-progress__step booking-progress__step--upcoming" aria-disabled="true">
-                <span className="booking-progress__number">3</span>
-                <span>Detalhes</span>
-              </div>
-            </nav>
-
-            <header className="booking-intro">
-              <h1>Escolha a data e o horário</h1>
-              <p>Selecione um dia disponível. A escolha dos horários será habilitada na próxima etapa.</p>
-            </header>
-
-            <p className="booking-notice" id="booking-demo-notice" role="note">
-              Datas e estados demonstrativos; não representam a disponibilidade oficial do laboratório.
-            </p>
-            <p className="booking-weekend-notice" id="booking-weekend-notice" role="note">
-              Finais de semana indisponíveis para agendamento. Esta é uma restrição provisória, sujeita à confirmação do funcionamento oficial do laboratório.
-            </p>
-
-            <div className="booking-calendar-layout">
-              <section className="booking-card booking-calendar" aria-labelledby="booking-calendar-title" aria-describedby="booking-demo-notice booking-weekend-notice">
-                <div className="booking-calendar__header">
-                  <div>
-                    <h2 id="booking-calendar-title">
-                      {formatarMesAno(mesExibido)}
-                    </h2>
-                    <p>Disponibilidade demonstrativa do laboratório</p>
-                  </div>
-                  <div className="booking-calendar__navigation">
-                    <button className="booking-calendar__month-button" type="button" aria-label="Mês anterior" onClick={() => alterarMes(-1)}>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </button>
-                    <button className="booking-calendar__month-button" type="button" aria-label="Próximo mês" onClick={() => alterarMes(1)}>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="booking-calendar__weekdays" aria-hidden="true">
-                  {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((dia) => <span key={dia}>{dia}</span>)}
-                </div>
-                <div className="booking-calendar__days" role="group" aria-label={`Dias de ${formatarMesAno(mesExibido)}`}>
-                  {diasDaGrade.map((dia) => {
-                    const pertenceAoMes = dia.getMonth() === mesExibido.getMonth()
-                      && dia.getFullYear() === mesExibido.getFullYear()
-                    const estado = pertenceAoMes
-                      ? obterEstadoDiaDemonstrativo(laboratorio.id, dia, hoje)
-                      : 'sem-dados'
-                    const ehHoje = formatarDataISO(dia) === formatarDataISO(hoje)
-                    const estaSelecionado = dataSelecionada !== null
-                      && formatarDataISO(dia) === formatarDataISO(dataSelecionada)
-                    const diaDisponivel = diaPodeSerSelecionado(estado, pertenceAoMes)
-
-                    return (
-                      <button
-                        className={[
-                          'booking-calendar__day',
-                          `booking-calendar__day--${estado}`,
-                          pertenceAoMes ? '' : 'booking-calendar__day--outside',
-                          ehHoje ? 'booking-calendar__day--today' : '',
-                          estaSelecionado ? 'booking-calendar__day--selected' : '',
-                        ].filter(Boolean).join(' ')}
-                        type="button"
-                        key={formatarDataISO(dia)}
-                        disabled={!diaDisponivel}
-                        aria-label={`${formatarDataLonga(dia)}: ${pertenceAoMes ? rotuloEstadoDia(estado) : 'dia de mês adjacente, indisponível nesta etapa'}${ehHoje ? ', hoje' : ''}`}
-                        aria-pressed={estaSelecionado}
-                        onClick={() => setDataSelecionada((atual) => (
-                          atualizarDataSelecionada(atual, dia, estado, pertenceAoMes)
-                        ))}
-                      >
-                        {dia.getDate()}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <div className="booking-calendar__legend" aria-label="Legenda de disponibilidade">
-                  <span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--free" />Livre</span>
-                  <span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--occupied" />Ocupado</span>
-                  <span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--no-data" />Sem disponibilidade demonstrativa</span>
-                  <span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--weekend" />Fim de semana, provisório</span>
-                  <span><i className="booking-calendar__legend-dot booking-calendar__legend-dot--today" />Hoje</span>
-                </div>
-              </section>
-
-              <aside className="booking-card booking-day-panel" aria-live="polite" aria-label="Dia selecionado">
-                {diaSelecionado ? (
-                  <>
-                    <h2>{formatarDataLonga(diaSelecionado)}</h2>
-                    <p className="booking-day-panel__hint">Dia demonstrativo selecionado.</p>
-                    <div className="booking-day-panel__empty">
-                      A seleção de horários será disponibilizada na próxima etapa.
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h2>Selecione uma data</h2>
-                    <p className="booking-day-panel__hint">Escolha um dia marcado como livre no calendário.</p>
-                    <div className="booking-day-panel__empty">
-                      Os horários deste dia aparecerão aqui na próxima etapa.
-                    </div>
-                  </>
-                )}
-              </aside>
-            </div>
-
-            <Link className="booking-back-link" to={`/laboratorios/${laboratorio.id}`}>
-              <span aria-hidden="true">←</span> Voltar aos detalhes do laboratório
-            </Link>
-          </>
-        ) : (
-          <section className="placeholder-card">
-            <p className="placeholder-card__eyebrow">ID {id}</p>
-            <h1>Laboratório não encontrado</h1>
-            <p>Não foi possível encontrar um laboratório com o ID {id}.</p>
-            <Link className="button button--primary" to="/">Voltar ao catálogo</Link>
-          </section>
-        )}
-      </main>
-    </>
-  )
-}
-
-function formatarDataISO(data: Date): string {
-  const ano = data.getFullYear()
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const dia = String(data.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
-
-function formatarMesAno(data: Date): string {
-  const texto = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(data)
-  return texto.charAt(0).toLocaleUpperCase('pt-BR') + texto.slice(1)
-}
-
-function formatarDataLonga(data: Date): string {
-  const texto = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(data)
-  return texto.charAt(0).toLocaleUpperCase('pt-BR') + texto.slice(1)
-}
-
 function rotuloEstadoDia(estado: string): string {
   if (estado === 'livre') return 'livre, demonstrativo'
   if (estado === 'ocupado') return 'ocupado, demonstrativo'

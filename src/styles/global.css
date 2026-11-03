@@ -309,3 +309,25 @@ a { color: inherit; }
   .booking-calendar__day { min-height: 32px; border-radius: 8px; font-size: 11px; }
   .booking-calendar__legend { gap: 12px; }
 }
+
+/* Etapa 7.2: intervalos e seleção demonstrativos, isolados do catálogo. */
+.booking-time-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.booking-time-slot { min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid #b9d8ca; border-radius: 9px; background: #f2faf6; color: #205d43; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.booking-time-slot small { color: inherit; font-size: 10px; font-weight: 600; }
+.booking-time-slot:hover:not(:disabled) { border-color: var(--color-primary); background: #e5f4ec; }
+.booking-time-slot:focus-visible, .booking-continue:focus-visible { outline: 3px solid #8dc8a5; outline-offset: 2px; }
+.booking-time-slot--ocupado, .booking-time-slot:disabled { border-color: #d6d9d8; background: #eceeed; color: #555f5b; cursor: not-allowed; }
+.booking-time-slot.is-selected { border: 2px solid var(--color-primary); background: var(--color-primary); color: #fff; }
+.booking-selection-summary { display: grid; gap: 7px; padding: 14px; border: 1px solid #dce9e1; border-radius: 10px; background: #f5faf7; color: #29463a; font-size: 13px; line-height: 1.4; }
+.booking-selection-summary strong { font-size: 14px; }
+.booking-continue { width: 100%; justify-content: center; }
+.booking-continue:disabled { opacity: .55; cursor: not-allowed; }
+.booking-continue__feedback { margin: 0; color: #315f47; font-size: 12px; line-height: 1.45; }
+@media (max-width: 760px) { .booking-time-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .booking-time-list { grid-template-columns: 1fr; } }
+.booking-time-reset { justify-self: start; padding: 0; border: 0; background: transparent; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.booking-time-slot.booking-time-slot--blocked { border-style: dashed; border-color: #9da9a3; background: #f2f4f3; color: #4f5a55; }
+.booking-time-blocked-message { margin: 0; padding: 10px 12px; border-left: 3px solid #9a7740; border-radius: 5px; background: #fbf7ed; color: #5f4b28; font-size: 12px; line-height: 1.45; }
+.booking-time-reset { min-height: 36px; padding: 7px 11px; border: 1px solid #a9c7b5; border-radius: 7px; background: #f6faf7; text-decoration: none; }
+.booking-time-reset:hover { background: #eaf4ee; }
+.booking-time-reset:focus-visible { outline: 3px solid #8dc8a5; outline-offset: 2px; }
