@@ -3,7 +3,7 @@ import { Cabecalho } from '../components/Cabecalho'
 import { detalhesLaboratoriosDemonstrativos } from '../data/detalhesLaboratorios'
 import { horariosLaboratoriosDemonstrativos } from '../data/horariosLaboratorios'
 import { laboratoriosFicticios } from '../data/laboratorios'
-import { formatarDataRelativa, proximosHorariosLivresDemonstrativos } from '../data/proximosHorariosLivres'
+import { filtrarProximosHorariosDemonstrativos, formatarDataRelativa, proximosHorariosLivresDemonstrativos } from '../data/proximosHorariosLivres'
 
 interface DetalhesLaboratorioProps {
   id: string
@@ -53,7 +53,10 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
   const laboratorio = laboratoriosFicticios.find((item) => String(item.id) === id)
   const detalhes = laboratorio ? detalhesLaboratoriosDemonstrativos[laboratorio.id] : undefined
   const horarios = laboratorio ? horariosLaboratoriosDemonstrativos[laboratorio.id] : undefined
-  const proximosHorarios = laboratorio ? proximosHorariosLivresDemonstrativos[laboratorio.id] : undefined
+  const hoje = new Date()
+  const proximosHorarios = laboratorio?.disponivel
+    ? filtrarProximosHorariosDemonstrativos(proximosHorariosLivresDemonstrativos[laboratorio.id] || [], horarios || [], hoje)
+    : []
   const periodosDeFuncionamento = horarios ? agruparDiasComMesmoHorario(horarios) : []
 
   return (
@@ -143,13 +146,15 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
                 )}
 
                 <section className="detail-card detail-slots" aria-labelledby="detail-slots-title">
-                  <h2 id="detail-slots-title">Próximos horários livres</h2>
+                  <h2 id="detail-slots-title">{laboratorio.disponivel ? 'Próximos horários livres' : 'Agendamento indisponível'}</h2>
                   <p className="detail-slots__notice">Horários demonstrativos; não representam a disponibilidade oficial.</p>
-                  {proximosHorarios && proximosHorarios.length > 0 ? (
+                  {!laboratorio.disponivel ? (
+                    <p className="detail-slots__empty">Este laboratório está indisponível para novas solicitações; não há horários apresentados para agendamento.</p>
+                  ) : proximosHorarios.length > 0 ? (
                     <div className="detail-slots__groups">
                       {proximosHorarios.map((grupo) => (
                         <div className="detail-slots__group" key={grupo.diasAFrente}>
-                          <h3 className="detail-slots__date">{formatarDataRelativa(grupo.diasAFrente)}</h3>
+                          <h3 className="detail-slots__date">{formatarDataRelativa(grupo.diasAFrente, hoje)}</h3>
                           <ul className="detail-slots__list">
                             {grupo.horarios.map((horario) => (
                               <li className="detail-slots__item" key={horario}>
@@ -161,12 +166,12 @@ export function DetalhesLaboratorio({ id }: DetalhesLaboratorioProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="detail-slots__empty">Nenhum horário demonstrativo cadastrado</p>
+                    <p className="detail-slots__empty">Nenhum horário demonstrativo compatível com o funcionamento cadastrado.</p>
                   )}
                 </section>
-                <Link className="button button--primary" to={`/laboratorios/${laboratorio.id}/agendamento`}>
+                {laboratorio.disponivel ? <Link className="button button--primary" to={`/laboratorios/${laboratorio.id}/agendamento`}>
                   Solicitar agendamento
-                </Link>
+                </Link> : <p className="booking-weekend-notice" role="note">Este laboratório está indisponível para novas solicitações de agendamento. Os detalhes continuam disponíveis para consulta.</p>}
               </div>
             </div>
           )}

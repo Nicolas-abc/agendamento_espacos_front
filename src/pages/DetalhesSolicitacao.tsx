@@ -16,7 +16,7 @@ export function DetalhesSolicitacao({ id }: { id: string }) {
   const finalidadeId = useId()
   const tituloModoRef = useRef<HTMLHeadingElement>(null)
   const lab = laboratoriosFicticios.find(item => String(item.id) === id)
-  const valida = Boolean(lab && selecaoDemonstrativaValida(lab.id, params))
+  const valida = Boolean(lab?.disponivel && selecaoDemonstrativaValida(lab.id, params))
   const data = parseData(params.get('data'))
   const inicio = params.get('inicio') || ''
   const fim = params.get('fim') || ''
@@ -64,6 +64,10 @@ export function DetalhesSolicitacao({ id }: { id: string }) {
         <h2>Laboratório não encontrado</h2>
         <p>Não foi possível encontrar um laboratório com o ID {id}.</p>
         <Link className="button button--primary" to="/">Voltar ao catálogo</Link>
+      </section> : !lab.disponivel ? <section className="booking-card booking-day-panel">
+        <h2>Laboratório indisponível</h2>
+        <p>Este laboratório está indisponível para novas solicitações de agendamento.</p>
+        <Link className="booking-back-link" to={`/laboratorios/${lab.id}`}>Consultar detalhes do laboratório</Link>
       </section> : !valida || !data ? <section className="booking-card booking-day-panel">
         <h2>Seleção ausente ou inválida</h2>
         <p className="booking-day-panel__hint">Retorne ao calendário para conferir a data e selecionar um intervalo demonstrativo livre.</p>

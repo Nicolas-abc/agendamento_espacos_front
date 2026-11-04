@@ -1,3 +1,5 @@
+import type { HorarioDiaDemonstrativo } from './horariosLaboratorios'
+
 export interface GrupoHorarioLivreDemonstrativo {
   diasAFrente: number
   horarios: string[]
@@ -37,4 +39,21 @@ export function formatarDataRelativa(diasAFrente: number, dataBase = new Date())
   }).format(data)
 
   return dataFormatada.charAt(0).toLocaleUpperCase('pt-BR') + dataFormatada.slice(1)
+}
+
+// Filtra a fixture sem criar novos dias ou presumir disponibilidade oficial.
+export function filtrarProximosHorariosDemonstrativos(
+  grupos: GrupoHorarioLivreDemonstrativo[],
+  funcionamento: HorarioDiaDemonstrativo[],
+  dataBase: Date,
+): GrupoHorarioLivreDemonstrativo[] {
+  return grupos.flatMap(grupo => {
+    const data = new Date(dataBase.getFullYear(), dataBase.getMonth(), dataBase.getDate() + grupo.diasAFrente)
+    const periodos = funcionamento.filter(dia => dia.diaSemana === data.getDay() && dia.ativo)
+    const horarios = grupo.horarios.filter(hora => periodos.some(periodo =>
+      periodo.horaAbertura && periodo.horaFechamento
+      && hora >= periodo.horaAbertura && hora < periodo.horaFechamento,
+    ))
+    return horarios.length ? [{ ...grupo, horarios }] : []
+  })
 }
