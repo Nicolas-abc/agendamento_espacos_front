@@ -336,3 +336,19 @@ a { color: inherit; }
 .booking-details-summary { display: grid; gap: 16px; margin: 8px 0; overflow-wrap: anywhere; }
 .booking-details-summary dt { color: var(--color-muted); font-size: 13px; }
 .booking-details-summary dd { margin: 4px 0 0; color: #1d2926; font-weight: 600; }
+
+/* Etapa 7.4: finalidade demonstrativa, sem envio nesta versao. */
+.booking-purpose-form { display: grid; gap: 12px; margin-top: 8px; padding-top: 22px; border-top: 1px solid var(--color-border); }
+.booking-purpose-form__heading h2 { margin: 0 0 5px; color: #1d2926; font-size: 19px; line-height: 1.3; }
+.booking-purpose-form__heading p { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.45; }
+.booking-purpose-form__label { color: #1d2926; font-size: 14px; font-weight: 600; }
+.booking-purpose-form__label span { color: #a1322d; }
+.booking-purpose-form textarea { width: 100%; min-height: 128px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 9px; background: #fff; color: #1d2926; font: inherit; font-size: 14px; line-height: 1.5; resize: vertical; }
+.booking-purpose-form textarea:focus-visible { border-color: var(--color-primary); outline: 3px solid #88cbb2; outline-offset: 2px; }
+.booking-purpose-form textarea[aria-invalid="true"] { border-color: #a1322d; }
+.booking-purpose-form__meta { display: flex; min-height: 20px; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.booking-purpose-form__error { margin: 0; color: #8c2925; font-size: 12px; line-height: 1.4; }
+.booking-purpose-form__count { margin-left: auto; color: var(--color-muted); font-size: 12px; white-space: nowrap; }
+.booking-purpose-form__notice { margin: 0; padding: 11px 12px; border-radius: 8px; background: #f3f7f5; color: #45544e; font-size: 13px; line-height: 1.45; }
+.booking-purpose-form__submit { width: 100%; }
+.booking-purpose-form__submit:disabled { opacity: .55; cursor: not-allowed; }
