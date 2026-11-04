@@ -4,7 +4,7 @@
 
 O LabAgenda permite consultar laboratórios e preparar uma solicitação demonstrativa. Este é o repositório independente do frontend; o backend FastAPI é mantido separadamente.
 
-Estado de referência: branch `feature/frontend-laboratorios`, commit `42d2e48`. As Etapas 7.1 a 7.5 e a Revisão R1 estão implementadas e versionadas. O fluxo chega à prévia, sem integração HTTP, autenticação, envio real, persistência, aprovação de solicitações ou confirmação de reservas neste módulo.
+Estado de referência: branch `feature/frontend-laboratorios`, commit `938bafe`. As Etapas 7.1 a 7.5 e as Revisões R1, R2 e R3 estão concluídas e versionadas; a R2 atualizou esta documentação. O fluxo chega à prévia, sem integração HTTP, autenticação, envio real, persistência, aprovação de solicitações ou confirmação de reservas neste módulo.
 
 ## 2. Stack e organização do repositório
 
@@ -101,18 +101,31 @@ Contrato de referência consultado no backend: `origin/dev`, commit `400e79e`. N
 
 A referência também possui consultas de disponibilidade e agendamentos. A existência desses contratos não significa consumo pelo frontend. Sala, equipamentos, tipos de uso e tema do modelo visual não devem ser presumidos como campos equivalentes da resposta de espaço; o mapeamento exige alinhamento.
 
-## 8. Correções da Revisão R1
+## 8. Correções das Revisões R1 e R3
+
+### Revisão R1
 
 - `disponivel=false` impede novas solicitações: ação substituída por explicação e proteção também no calendário e formulário acessados diretamente. A consulta dos detalhes permanece disponível.
 - Próximos horários são ocultados para laboratórios indisponíveis e filtrados por funcionamento para os demais, sem modificar as fixtures.
 - Seletores CSS alinhados aos estados `--livre`, `--ocupado` e `--passado`, com seus indicadores visuais.
 - Foco visível restaurado na pesquisa por `:focus-within`, seguindo o padrão visual existente.
 
+### Resultados da Revisão R3
+
+Implementação conferida no commit `938bafe`:
+
+- Contraste do dia selecionado preservado durante hover: o estilo de hover de dia livre exclui `--selected`, mantendo as cores existentes e o indicador de foco.
+- “Limpar seleção” aparece imediatamente abaixo do resumo somente com intervalo válido, reutilizando o estilo secundário existente. Antes da seleção não aparece; com apenas início, permanece “Escolher outro horário inicial”.
+- A limpeza remove `inicio`, `fim` e o marcador antigo `avancar`, preservando `data`, `mes` e o ID. Indicadores e resumo desaparecem, e o avanço fica desabilitado até uma nova seleção válida.
+- Após a atualização dos parâmetros, refs e efeito React transferem o foco para o primeiro slot livre habilitado, sem selecioná-lo. A ação é um botão acionável por teclado.
+
+As regras de continuidade, horários ocupados e intervalos de uma hora não foram alteradas. Build e verificação de whitespace foram aprovados durante a R3; isso não substitui testes no navegador.
+
 ## 9. Pendências e planejamento das próximas etapas
 
 Trabalho futuro de integração: obter IDs e catálogo reais; integrar usuário autenticado e autorização; consultar disponibilidade oficial; revalidar seleção e disponibilidade antes do envio; implementar criação, carregamento e tratamento de erros; distinguir solicitação Pendente de reserva confirmada. O servidor deve continuar sendo a autoridade das regras.
 
-Decisões pendentes: alinhar autenticação, acesso ao usuário, armazenamento do token e componentes compartilhados com a equipe; definir fuso e regras temporais; mapear dados visuais para o contrato real; avaliar persistência de rascunho; confirmar regras de finais de semana e tratamento de segundos. A hospedagem deve oferecer fallback para as rotas do BrowserRouter.
+Decisões pendentes: alinhar autenticação, acesso ao usuário, armazenamento do token e componentes compartilhados com a equipe; mapear dados visuais para o contrato real e confirmar o tratamento de segundos. Refinamentos de UX e regras temporais estão centralizados na seção seguinte. A hospedagem deve oferecer fallback para as rotas do BrowserRouter.
 
 Planejamento preliminar, sujeito à confirmação com a equipe:
 
@@ -121,7 +134,21 @@ Planejamento preliminar, sujeito à confirmação com a equipe:
 
 Essas telas e integrações não estão implementadas. Formulário demonstrativo e prévia já pertencem às Etapas 7.4 e 7.5; não devem ser descritos como trabalho ainda não iniciado.
 
-A proposta de transição global padronizada entre páginas continua pendente de avaliação e alinhamento com o grupo; não foi aprovada nem implementada. Os efeitos CSS existentes são locais.
+### Melhorias e refinamentos pendentes
+
+As prioridades abaixo são sugestões de planejamento, não decisões aprovadas. As situações atuais estão detalhadas nas seções de estado e limitações; esta tabela centraliza o acompanhamento.
+
+| Melhoria | Problema ou motivação | Prioridade sugerida | Situação atual e dependências |
+| --- | --- | --- | --- |
+| Contador da finalidade | Texto bruto pode atingir o limite antes do contador trimado | Média | Divergência permanece; alinhar critério de contagem e limite sem perder a validação da finalidade |
+| UX de intervalo de uma hora | Dois cliques no mesmo slot e rótulo de término podem não ser intuitivos | Média | Funciona; “Limpar seleção” não muda essa interação. Avaliar orientação e rótulos preservando a regra |
+| Acessibilidade | Refinar identificação das regiões, indicação da página atual e foco ao retornar ao formulário | Média; validar antes da demonstração | Há labels, foco visível e foco após limpar; conferir teclado e leitor de tela, inclusive `aria-labelledby` do calendário e `aria-current` do cabeçalho |
+| Persistência da finalidade | Evitar perda de texto ao atualizar ou retornar ao calendário | Média | Somente memória; permanece entre formulário e prévia. Decidir política, duração e mecanismo de rascunho com a equipe |
+| Horários passados no dia atual | Evitar apresentar ou aceitar inícios que o backend rejeitaria | Alta antes do envio real | Ainda permitidos no protótipo; alinhar fuso, relógio de referência e revalidação no envio |
+| Funcionamento e calendário | Evitar divergências entre fontes de disponibilidade | Alta antes da integração | R1 filtra próximos horários, mas calendário usa fixture independente e bloqueia fins de semana provisoriamente; confirmar regras oficiais e fonte de dados |
+| Responsividade e zoom | Detectar transbordamento, contraste e perda de controles | Alta para verificação antes da demonstração | Há media queries; cobertura visual não comprovada. Conferir telas pequenas, zoom de 200%, hover e foco após limpar |
+| Testes automatizados | Proteger seleção, limpeza, navegação e validações contra regressões | Média; priorizar antes de ampliar a integração | Não há suíte versionada; definir ferramenta e cenários. Build e verificações em memória não equivalem a testes de interface |
+| Transição global | Padronizar mudanças de página se houver benefício de UX | Baixa | Proposta não aprovada nem implementada; depende de avaliação e alinhamento com o grupo. Efeitos CSS atuais são locais |
 
 ## 10. Comandos disponíveis e limites da validação
 
@@ -134,7 +161,7 @@ Comandos definidos em `package.json`, executados na raiz:
 
 Não há suíte ou script de testes automatizados no repositório. Build aprovado não comprova navegação, responsividade, acessibilidade, contratos em execução ou integração. Verificações pontuais anteriores em memória não constituem suíte versionada.
 
-A validação manual deve cobrir fluxo até a prévia, edição, retorno e atualização, seleção de uma hora, bloqueios, URLs inválidas, laboratório indisponível, dias fechados, foco por teclado e telas pequenas. Esta revisão documental não executa build nem altera código.
+A validação manual deve cobrir fluxo até a prévia, edição, retorno e atualização, seleção de uma hora, limpeza de intervalo com preservação da data e foco, contraste no hover, bloqueios, URLs inválidas, laboratório indisponível, dias fechados, foco por teclado e telas pequenas. Esta revisão documental não executa build nem altera código.
 
 ## 11. Histórico técnico resumido
 
@@ -155,3 +182,5 @@ Marcos comprovados no histórico atual:
 | `e50c512` | Formulário demonstrativo — Etapa 7.4 |
 | `3ebee19` | Prévia da solicitação — Etapa 7.5 |
 | `42d2e48` | Disponibilidade, coerência dos próximos horários e acessibilidade — R1 |
+| `b20ce34` | Atualização das decisões técnicas e estado do projeto — R2 |
+| `938bafe` | Limpeza da seleção de horários, foco após limpar e contraste do calendário — R3 |
