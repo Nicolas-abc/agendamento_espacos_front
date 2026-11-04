@@ -260,7 +260,7 @@ a { color: inherit; }
 .booking-calendar__day { display: grid; min-width: 0; min-height: 34px; grid-template-rows: minmax(0, 1fr) 7px; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 9px; background: #fff; color: #1d2926; font-size: 12px; font-weight: 500; line-height: 1; text-align: center; }
 .booking-calendar__day:disabled { cursor: default; }
 .booking-calendar__day--livre { background: #e7f4ef; color: #08745a; cursor: pointer; }
-.booking-calendar__day--livre:hover { background: #d5ebe2; }
+.booking-calendar__day--livre:not(.booking-calendar__day--selected):hover { background: #d5ebe2; }
 .booking-calendar__day--ocupado { background: #fff0ef; color: #9f332e; }
 .booking-calendar__day--sem-dados { border-color: #b8c3bf; border-style: dashed; background: #f8faf9; color: #52615c; }
 .booking-calendar__day--fim-de-semana { background: #f1f4f2; color: #52615c; }
